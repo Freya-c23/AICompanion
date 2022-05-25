@@ -1,38 +1,22 @@
 "use strict";
 
-// collect 5 different states: Sitting (r), drinking(d), yes(arm up)(y), no(arm to side)(n), standing(u)
+// train model
 
 
 let video;
 let poseNet;
 let pose;
 let skeleton;
+let img;
+let emoji;
 
-let brain;
-
-let state = 'waiting';
-let targetLabel;
-
-function keyPressed() {
-  if (key == 's') {
-    brain.saveData();
-  } else {
-    targetLabel = key;
-    console.log(targetLabel);
-    setTimeout(function () {
-      console.log('collecting');
-      state = 'collecting';
-      setTimeout(function () {
-        console.log('not collecting');
-        state = 'waiting';
-      }, 10000);
-    }, 10000);
-  }
-}
+let network;
+let poseLabel = "R";
 
 function setup() {
   createCanvas(640, 480);
-
+  img = loadImage('images/standup.jpg');
+  emoji = loadImage('images/smiley.png');
   video = createCapture(VIDEO);
   video.hide();
   poseNet = ml5.poseNet(video, modelLoaded);
@@ -40,28 +24,57 @@ function setup() {
 
   let options = {
     inputs: 34,
-    outputs: 5,
+    outputs: 4,
     task: 'classification',
     debug: true
+  }
+  network = ml5.neuralNetwork(options);
+  const modelInfo = {
+    model: 'model/model.json',
+    metadata: 'model/model_meta.json',
+    weights: 'model/model.weights.bin',
   };
-  brain = ml5.neuralNetwork(options);
+  network.load(modelInfo, networkLoaded);
 }
+
+function networkLoaded() {
+  console.log('pose classification ready!');
+  classifyPose();
+}
+
+function classifyPose() {
+  if (pose) {
+    let inputs = [];
+    for (let i = 0; i < pose.keypoints.length; i++) {
+      let x = pose.keypoints[i].position.x;
+      let y = pose.keypoints[i].position.y;
+      inputs.push(x);
+      inputs.push(y);
+    }
+    network.classify(inputs, gotResult);
+  } else {
+    setTimeout(classifyPose, 100);
+  }
+}
+
+function gotResult(error, results) {
+
+  if (results[0].confidence > 0.75) {
+    poseLabel = results[0].label.toUpperCase();
+    console.log(poseLabel);
+  }
+
+
+
+  //console.log(results[0].confidence);
+  classifyPose();
+}
+
 
 function gotPoses(poses) {
   if (poses.length > 0) {
     pose = poses[0].pose;
     skeleton = poses[0].skeleton;
-    if (state == 'collecting') {
-      let inputs = [];
-      for (let i = 0; i < pose.keypoints.length; i++) {
-        let x = pose.keypoints[i].position.x;
-        let y = pose.keypoints[i].position.y;
-        inputs.push(x);
-        inputs.push(y);
-      }
-      let target = [targetLabel];
-      brain.addData(inputs, target);
-    }
   }
 }
 
@@ -71,28 +84,21 @@ function modelLoaded() {
 }
 
 function draw() {
-  translate(video.width, 0);
-  scale(-1, 1);
-  image(video, 0, 0, video.width, video.height);
-
-  if (pose) {
-    for (let i = 0; i < skeleton.length; i++) {
-      let a = skeleton[i][0];
-      let b = skeleton[i][1];
-      strokeWeight(2);
-      stroke(0);
-
-      line(a.position.x, a.position.y, b.position.x, b.position.y);
-    }
-    for (let i = 0; i < pose.keypoints.length; i++) {
-      let x = pose.keypoints[i].position.x;
-      let y = pose.keypoints[i].position.y;
-      fill(0);
-      stroke(255);
-      ellipse(x, y, 16, 16);
-    }
+  push();
+  // translate(video.width, 0);
+  // scale(-1, 1);
+  // image(video, 0, 0, video.width, video.height);
+  if (poseLabel === "R") {
+    clear();
+    image(img, 0, 0);
+  } else if (poseLabel != "R") {
+    clear();
+    image(emoji, 0, 0, emoji.width / 2, emoji.height / 2);
   }
+
+
 }
+
 
 //references
 // ml5.js: Pose Classification
