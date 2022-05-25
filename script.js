@@ -7,22 +7,22 @@ let video;
 let poseNet;
 let pose;
 let skeleton;
-// let hey;
 let emoji;
 let img;
+let pic;
 
 let network;
-let poseLabel;
+let poseLabel = "u";
+
 
 function setup() {
   createCanvas(640, 480);
-  emoji = loadImage('images/smiley.png');
-  img = loadImage('images/standup.jpg');
-  // hey = loadImage('images/waving.gif');
   video = createCapture(VIDEO);
   video.hide();
   poseNet = ml5.poseNet(video, modelLoaded);
   poseNet.on('pose', gotPoses);
+  img = loadImage('images/standup.jpg');
+  emoji = loadImage('images/smiley.png');
 
   let options = {
     inputs: 34,
@@ -62,8 +62,8 @@ function classifyPose() {
 
 function gotResult(error, results) {
 
-  if (results[0].confidence > 0.75) {
-    poseLabel = results[0].label.toUpperCase();
+  if (results[0].confidence > 0.8) {
+    poseLabel = results[0].label;
     console.log(poseLabel);
   }
 
@@ -78,13 +78,11 @@ function gotPoses(poses) {
   }
 }
 
-
 function modelLoaded() {
   console.log('poseNet ready');
 }
 
 function draw() {
-  // push();
   // translate(video.width, 0);
   // scale(-1, 1);
   // image(video, 0, 0, video.width, video.height);
@@ -94,18 +92,16 @@ function draw() {
   // } else if (poseLabel == "R") {
   //   setTimeout(standUp, 10000);
   // } 
-  if (poseLabel === "R") {
-    setInterval(() => {
-      clear();
-      image(img, 0, 0);
-    }, 5000);
+
+  if (poseLabel != "r") {
+    clear();
+    pic = image(emoji, 0, 0, emoji.width / 2, emoji.height / 2);
   } else {
     clear();
-    image(emoji, 0, 0, emoji.width / 2, emoji.height / 2);
+    pic = image(img, 0, 0);
   }
 
 }
-
 
 
 //references
