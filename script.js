@@ -7,16 +7,18 @@ let video;
 let poseNet;
 let pose;
 let skeleton;
-let img;
+// let hey;
 let emoji;
+let img;
 
 let network;
-let poseLabel = "R";
+let poseLabel;
 
 function setup() {
   createCanvas(640, 480);
-  img = loadImage('images/standup.jpg');
   emoji = loadImage('images/smiley.png');
+  img = loadImage('images/standup.jpg');
+  // hey = loadImage('images/waving.gif');
   video = createCapture(VIDEO);
   video.hide();
   poseNet = ml5.poseNet(video, modelLoaded);
@@ -24,10 +26,10 @@ function setup() {
 
   let options = {
     inputs: 34,
-    outputs: 4,
+    outputs: 5,
     task: 'classification',
     debug: true
-  }
+  };
   network = ml5.neuralNetwork(options);
   const modelInfo = {
     model: 'model/model.json',
@@ -35,6 +37,7 @@ function setup() {
     weights: 'model/model.weights.bin',
   };
   network.load(modelInfo, networkLoaded);
+
 }
 
 function networkLoaded() {
@@ -64,12 +67,9 @@ function gotResult(error, results) {
     console.log(poseLabel);
   }
 
-
-
-  //console.log(results[0].confidence);
   classifyPose();
-}
 
+}
 
 function gotPoses(poses) {
   if (poses.length > 0) {
@@ -84,20 +84,28 @@ function modelLoaded() {
 }
 
 function draw() {
-  push();
+  // push();
   // translate(video.width, 0);
   // scale(-1, 1);
   // image(video, 0, 0, video.width, video.height);
+  // if (poseLabel != "R") {
+  //   clear();
+  //   image(emoji, 0, 0, emoji.width / 2, emoji.height / 2);
+  // } else if (poseLabel == "R") {
+  //   setTimeout(standUp, 10000);
+  // } 
   if (poseLabel === "R") {
-    clear();
-    image(img, 0, 0);
-  } else if (poseLabel != "R") {
+    setInterval(() => {
+      clear();
+      image(img, 0, 0);
+    }, 5000);
+  } else {
     clear();
     image(emoji, 0, 0, emoji.width / 2, emoji.height / 2);
   }
 
-
 }
+
 
 
 //references
